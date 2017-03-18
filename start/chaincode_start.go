@@ -197,7 +197,7 @@ func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []st
 		
 		voting.Options = append(voting.Options, option)
 		fmt.Println("! appended option to voting")
-		i++;
+		
 	}
 	
 	//get the voting struct
