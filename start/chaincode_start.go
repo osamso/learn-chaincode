@@ -158,13 +158,16 @@ func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []st
 	fmt.Println("Creating new Voting...")
 	voting := Voting{}
 	voting.Id = strconv.Itoa(id1)
-	fmt.Println("voting.Id: %s", voting.Id)
+	fmt.Printf("voting.Id: %s\n", voting.Id)
 	voting.Description = args[1]
-        fmt.Println("voting.Description: %s", voting.Description)
+        fmt.Printf("voting.Description: %s\n", voting.Description)
+	voting.Status = true
+        fmt.Printf("voting.Status: %s\n", voting.Status)
+
 	voting.StartVotingTimestamp = makeTimestamp()
-	fmt.Println("voting.StartVotingTimestamp: %s", strconv.FormatInt(voting.StartVotingTimestamp, 10))	
+	fmt.Printf("voting.StartVotingTimestamp: %s\n", strconv.FormatInt(voting.StartVotingTimestamp, 10))	
 	voting.VotingDeadlineInMinutes = deadline1
-	fmt.Println("voting.VotingDeadlineInMinutes: %s", strconv.Itoa(voting.VotingDeadlineInMinutes))	
+	fmt.Printf("voting.VotingDeadlineInMinutes: %s\n", strconv.Itoa(voting.VotingDeadlineInMinutes))	
 
 	// voting.Voters
 	jsonAsBytes, _ := json.Marshal(voting)
@@ -184,10 +187,10 @@ func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []st
 			return nil, errors.New(strconv.Itoa(i) + " argument must be a non-empty string")
 		}
 		option.Description = args[i] 		
-		fmt.Println("Option.Description: %s", option.Description)		
+		fmt.Printf("Option.Description: %s\n", option.Description)		
 
 		option.NumberOfVotes = 0		
-		fmt.Println("Option.NumberOfVotes: %s", strconv.Itoa(option.NumberOfVotes)) 
+		fmt.Printf("Option.NumberOfVotes: %s\n", strconv.Itoa(option.NumberOfVotes)) 
 		
 		// TODO: Pendent inicialitzar vots
 		
