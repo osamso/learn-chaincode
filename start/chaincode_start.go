@@ -132,9 +132,9 @@ func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []st
 	var err error
 	var option Option
 	
-	//	0        1      2     3      4      5       6
-	//["1", "Iniciativas Innovacion 2017", "30", "", "16"] *"blue", "35*
-	if len(args) < 4 {
+	//	0      1      2     3      4      * 
+	//	["1", "Iniciativas Innovacion 2017", "30", "Arquitecturas IoT", "BlockChain", "ChatBots", "ELK", "Gestión entornos de Desarrollo", "Physical web"]
+	if len(args) < 5 {
 		return nil, errors.New("Incorrect number of arguments. Expecting like 5?")
 	}
 
