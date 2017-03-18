@@ -162,7 +162,7 @@ func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []st
 	voting.Description = args[1]
         fmt.Printf("voting.Description: %s\n", voting.Description)
 	voting.Status = true
-        fmt.Printf("voting.Status: %s\n", voting.Status)
+        fmt.Printf("voting.Status: %b\n", voting.Status)
 
 	voting.StartVotingTimestamp = makeTimestamp()
 	fmt.Printf("voting.StartVotingTimestamp: %s\n", strconv.FormatInt(voting.StartVotingTimestamp, 10))	
