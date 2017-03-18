@@ -173,7 +173,7 @@ func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []st
 	err = stub.PutState("_debug1", jsonAsBytes)
 	
 	optionId := 1	
-	for i:=2; i < len(args); i++ {
+	for i:=3; i < len(args); i++ {
 		
 		fmt.Println("Creating new voting Option...")
 		fmt.Println("Option.Id: " + strconv.Itoa(optionId))
