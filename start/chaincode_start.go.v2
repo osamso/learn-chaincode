@@ -36,7 +36,6 @@ var votingIndexStr = "_votingindex"
 type Member struct{
 	Id string `json:"id"`				
 	Name string `json:"name"`
-	Channel string `json:"channel"`
 	Category string `json:"category"`
 	Office string `json:"office"`
 }
@@ -117,17 +116,14 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	fmt.Println("invoke is running " + function)
 
 	// Handle different functions
-	if function == "init" {	
+	if function == "init" {													//initialize the chaincode state, used as reset
 		return t.Init(stub, "init", args)
-	} else if function == "add_voting" {
+	} else if function == "add_voting" {										//deletes an entity from its state
 		res, err := t.add_voting(stub, args)
 		return res, err
-	} else if function == "vote" {
-                res, err := t.vote(stub, args)
-                return res, err
-        }
-	fmt.Println("invoke did not find func: " + function)
-	// Error
+	}
+	fmt.Println("invoke did not find func: " + function)					//error
+
 	return nil, errors.New("Received unknown function invocation")
 
 }
@@ -230,95 +226,7 @@ func makeTimestamp() int64 {
     return time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
 }
 
-
-func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
-	// votingId, optionId, justification, id, name, category, office, channel
-	//     0        1      	     2         3    4      5	    6	     7
-        //      ["1", "2", "Justification", "1", "Peter", "SKL", "Barcelona", "Twitter"]
-        if len(args) < 8 {
-                return nil, errors.New("Incorrect number of arguments. Expecting like 8?")
-        }
-	
-	// 1st argument - votingId
-        votingId1, err := strconv.Atoi(args[0])
-        if err != nil {
-                return nil, errors.New("1st argument must be a numeric string")
-        } 
-
-	// 2nd argument - optionId
-        optionId1, err := strconv.Atoi(args[1])
-        if err != nil {
-                return nil, errors.New("2nd argument must be a numeric string")
-        }
-
-	// 4th argument - memberId
-	if len(args[3]) <= 0 {
-		return nil, errors.New("4th argument must be a non-empty string")
-	}
-
-	// Get all votings
-	votingsAsBytes, err := stub.GetState(votingIndexStr)
-	if err != nil {
-		return nil, errors.New("Failed to get votings")
-	}
-	var allvotings AllVotings
-        json.Unmarshal(votingsAsBytes, &allvotings)
-
-	// Find voting by ID
-	for i := range allvotings.Votings{	
-		if allvotings.Votings[i].Id == strconv.Itoa(votingId1){
-			fmt.Println("Voting found!"); 
-			
-			// Check if member already voted
-			for j := range allvotings.Votings[i].Voters{
-				if allvotings.Votings[i].Voters[j].Id == args[3]{
-					fmt.Println("Error - Member already voted");
-					return nil, errors.New("Failed to vote - Member already voted")
-				}	
-			}
-
-			// Add new member	
-			newMember := Member{}
-			newMember.Id = args[3]
-			newMember.Name = args[4]
-			newMember.Category = args[5]
-			newMember.Office = args[6]
-			newMember.Channel = args[7]
-			allvotings.Votings[i].Voters = append(allvotings.Votings[i].Voters, newMember)			
-
-			// Find option by ID
-			for k := range allvotings.Votings[i].Options{
-				if allvotings.Votings[i].Options[k].Id == optionId1{
-					fmt.Println("Option found!"); 
-					
-					allvotings.Votings[i].Options[k].NumberOfVotes += 1 
-					
-					newVote := Vote{}
-					newVote.Voter = newMember
-					newVote.Justification = args[2] 
-
-					allvotings.Votings[i].Options[k].Votes = append(allvotings.Votings[i].Options[k].Votes, newVote)	
-		
-					allvotings.Votings[i].Options[k].NumberOfVotes += 1
-			
-				}
-			}
-			
-			jsonAsBytes, _ := json.Marshal(allvotings)
-			err = stub.PutState(votingIndexStr, jsonAsBytes)
-			if err != nil {
-				return nil, err
-			}
-			fmt.Println("- end vote")
-        		return nil, nil
-		}
-		return nil, errors.New("Voting not found")
-	}
-	return nil, errors.New("Voting not found")
-
-}
-
+// Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	fmt.Println("query is running " + function)
