@@ -292,8 +292,6 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 				if allvotings.Votings[i].Options[k].Id == optionId1{
 					fmt.Println("Option found!"); 
 					
-					allvotings.Votings[i].Options[k].NumberOfVotes += 1 
-					
 					newVote := Vote{}
 					newVote.Voter = newMember
 					newVote.Justification = args[2] 
