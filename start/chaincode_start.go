@@ -402,6 +402,6 @@ func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface
 func (t *SimpleChaincode) error(code, description string) ([]byte, error) {
 	jsonResp := "{\"error\": {\"code\":" + code + "\", \"description\":" + description + "\"}}"
 	errorAsBytes, _ := json.Marshal(jsonResp)
-	return errorAsBytes, errors.New(jsonResp)
-
+	// return errorAsBytes, errors.New(jsonResp)
+	return errorAsBytes, nil
 }
