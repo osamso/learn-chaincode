@@ -131,8 +131,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "vote" {
   	res, err := t.vote(stub, args)
     return res, err
-	} else if function == "query" {
-	  	res, err := t.read(stub, args)
+	} else if function == "update" {
+	  	res, err := t.update(stub, args)
 	    return res, err
 	}
 	fmt.Println("invoke did not find func: " + function)
@@ -356,12 +356,33 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	if err != nil {
 		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
 		return nil, errors.New(jsonResp)
+	}
+	return valAsbytes, nil
+}
+
+
+func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var name, jsonResp string
+	var err error
+
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting name of the var to query")
+	}
+
+	name = args[0]
+	//get the var from chaincode state
+	valAsbytes, err := stub.GetState(name)
+	if err != nil {
+		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
+		return nil, errors.New(jsonResp)
 	} else {
 			// Close votings that have expired before returing response
 			return t.update_votings_status(stub, valAsbytes);
 	}
 	return valAsbytes, nil
 }
+
+
 
 func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface, allVotingsAsBytes []byte) ([]byte, error) {
 	var currentTime int64
@@ -381,11 +402,11 @@ func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface
 		votingDeadlineInMilliseconds = allvotings.Votings[i].VotingDeadlineInMinutes * 60 * 1000
 		expirationTime := allvotings.Votings[i].StartVotingTimestamp + int64(votingDeadlineInMilliseconds)
 
-		fmt.Printf("Checking voting expiration...")
-		fmt.Printf("votingDeadlineInMilliseconds: %s\n", allvotings.Votings[i].VotingDeadlineInMinutes)
-		fmt.Printf("votingDeadlineInMilliseconds: %s\n", votingDeadlineInMilliseconds)
+		fmt.Printf("Checking voting expiration...\n")
+		fmt.Printf("votingDeadlineInMinutes: %s\n", strconv.Itoa(allvotings.Votings[i].VotingDeadlineInMinutes))
+		fmt.Printf("votingDeadlineInMilliseconds: %s\n", strconv.Itoa(votingDeadlineInMilliseconds))
 		fmt.Printf("expirationTime: %s\n", strconv.FormatInt(expirationTime, 10))
-		fmt.Printf("currentTime: %s\n", strconv.FormatInt(expirationTime, 10))
+		fmt.Printf("currentTime: %s\n", strconv.FormatInt(currentTime, 10))
 
 		// Checking if voting has expired for closing it
 		if expirationTime > currentTime {
