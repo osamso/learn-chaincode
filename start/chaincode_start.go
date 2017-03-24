@@ -381,9 +381,15 @@ func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface
 		votingDeadlineInMilliseconds = allvotings.Votings[i].VotingDeadlineInMinutes * 60 * 1000
 		expirationTime := allvotings.Votings[i].StartVotingTimestamp + int64(votingDeadlineInMilliseconds)
 
+		fmt.Printf("Checking voting expiration...")
+		fmt.Printf("votingDeadlineInMilliseconds: %s\n", allvotings.Votings[i].VotingDeadlineInMinutes)
+		fmt.Printf("votingDeadlineInMilliseconds: %s\n", votingDeadlineInMilliseconds)
+		fmt.Printf("expirationTime: %s\n", strconv.FormatInt(expirationTime, 10))
+		fmt.Printf("currentTime: %s\n", strconv.FormatInt(expirationTime, 10))
+
 		// Checking if voting has expired for closing it
 		if expirationTime > currentTime {
-			fmt.Printf("Voting identified by Id = '%s' has expired\n", allvotings.Votings[i].Id)
+			fmt.Printf("Voting identified by Id = '%s' has expired!!\n", allvotings.Votings[i].Id)
 			allvotings.Votings[i].Status = false
 			votingUpdated = true
 		}
