@@ -360,6 +360,7 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 			// Close votings that have expired before returing response
 			// return t.update_votings_status(stub, valAsbytes);
 	}
+	return valAsbytes, nil
 }
 
 func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface, allVotingsAsBytes []byte) ([]byte, error) {
