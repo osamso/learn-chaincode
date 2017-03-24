@@ -131,7 +131,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "vote" {
   	res, err := t.vote(stub, args)
     return res, err
-  }
+	} else if function == "query" {
+	  	res, err := t.read(stub, args)
+	    return res, err
+	}
 	fmt.Println("invoke did not find func: " + function)
 	// Error
 	return nil, errors.New("Received unknown function invocation")
