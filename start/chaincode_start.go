@@ -385,6 +385,7 @@ func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string
 
 
 func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface, allVotingsAsBytes []byte) ([]byte, error) {
+	var jsonAsBytes []byte
 	var currentTime int64
 	var votingDeadlineInMilliseconds int
 	var err error
@@ -416,11 +417,15 @@ func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface
 		}
   }
 	if votingUpdated == true {
-		allVotingsAsBytes, _ := json.Marshal(allvotings)
-		err = stub.PutState(votingIndexStr, allVotingsAsBytes)
+		fmt.Printf("Votings status updated")
+		jsonAsBytes, _ := json.Marshal(allvotings)
+		err = stub.PutState(votingIndexStr, jsonAsBytes)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		fmt.Printf("Votings status not updated")
+		jsonAsBytes := allVotingsAsBytes
 	}
 	fmt.Println("- end update_votings_status")
 	return allVotingsAsBytes, nil
