@@ -358,7 +358,7 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 		return nil, errors.New(jsonResp)
 	} else {
 			// Close votings that have expired before returing response
-			// return t.update_votings_status(stub, valAsbytes);
+			return t.update_votings_status(stub, valAsbytes);
 	}
 	return valAsbytes, nil
 }
