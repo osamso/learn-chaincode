@@ -308,7 +308,8 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 					if err != nil {
 						return nil, err
 					}
-					return t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
+					// Don't retun an error after PutState
+					return nil, nil
 				}
 			}
 
