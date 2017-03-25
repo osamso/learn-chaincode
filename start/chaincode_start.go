@@ -277,7 +277,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 	// Get current timestamp
 	currentTime = makeTimestamp()
-	
+
 	// Find voting by ID
 	for i := range allvotings.Votings{
 		if allvotings.Votings[i].Id == strconv.Itoa(votingId1){
@@ -300,7 +300,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 				fmt.Printf("currentTime: %s\n", strconv.FormatInt(currentTime, 10))
 
 				// Checking if voting has expired and closes it
-				if expirationTime > currentTime {
+				if currentTime > expirationTime {
 					fmt.Printf("Voting identified by Id = '%s' is closed!!\n", allvotings.Votings[i].Id)
 					allvotings.Votings[i].Status = false
 					return t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
@@ -422,7 +422,7 @@ func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface
 		fmt.Printf("currentTime: %s\n", strconv.FormatInt(currentTime, 10))
 
 		// Checking if voting has expired for closing it
-		if expirationTime > currentTime {
+		if currentTime > expirationTime {
 			fmt.Printf("Voting identified by Id = '%s' has expired!!\n", allvotings.Votings[i].Id)
 			allvotings.Votings[i].Status = false
 			votingUpdated = true
