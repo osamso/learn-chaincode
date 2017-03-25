@@ -278,15 +278,17 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	// Get current timestamp
 	currentTime = makeTimestamp()
 
-	// Find voting by ID
+	// Iterate all votings
 	for i := range allvotings.Votings{
+
+		// Checking by voting ID
 		if allvotings.Votings[i].Id == strconv.Itoa(votingId1){
 			fmt.Println("Voting found!");
 
 			// Checking if voting is closed
 			if allvotings.Votings[i].Status == false {
 				fmt.Println("Error - Voting is closed");
-				return t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
+				t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
 
 			} else {
 
@@ -301,60 +303,57 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 				// Checking if voting has expired and closes it
 				if currentTime > expirationTime {
-					fmt.Printf("Voting identified by Id = '%s' is closed!!\n", allvotings.Votings[i].Id)
+					fmt.Printf("Error Voting identified by Id = '%s' should be closed!!\n", allvotings.Votings[i].Id)
 					allvotings.Votings[i].Status = false
-					jsonAsBytes, _ := json.Marshal(allvotings)
-					err = stub.PutState(votingIndexStr, jsonAsBytes)
-					if err != nil {
-						return nil, err
+
+				} else {
+
+					// Check if member already voted
+					for j := range allvotings.Votings[i].Voters{
+						if allvotings.Votings[i].Voters[j].Id == args[3]{
+							fmt.Println("Error - Member already voted");
+							return t.error(ERROR_CODE_MEMBER_ALREADY_VOTED, ERROR_DESCRIPTION_MEMBER_ALREADY_VOTED)
+						}
 					}
-					// Don't retun an error after PutState
-					return nil, nil
+
+					// Add new member
+					newMember := Member{}
+					newMember.Id = args[3]
+					newMember.Name = args[4]
+					newMember.Category = args[5]
+					newMember.Office = args[6]
+					newMember.Channel = args[7]
+					allvotings.Votings[i].Voters = append(allvotings.Votings[i].Voters, newMember)
+
+					// Find option by ID
+					for k := range allvotings.Votings[i].Options{
+
+						if allvotings.Votings[i].Options[k].Id == optionId1{
+							fmt.Println("Option found!");
+
+							newVote := Vote{}
+							newVote.Voter = newMember
+							newVote.Justification = args[2]
+
+							allvotings.Votings[i].Options[k].Votes = append(allvotings.Votings[i].Options[k].Votes, newVote)
+							allvotings.Votings[i].Options[k].NumberOfVotes += 1
+						}
+					} // end for voting.options
+				} // end if voting expired
+
+				jsonAsBytes, _ := json.Marshal(allvotings)
+				err = stub.PutState(votingIndexStr, jsonAsBytes)
+				if err != nil {
+					return nil, err
 				}
-			}
+				fmt.Println("- end vote")
+	      return nil, nil
 
-			// Check if member already voted
-			for j := range allvotings.Votings[i].Voters{
-				if allvotings.Votings[i].Voters[j].Id == args[3]{
-					fmt.Println("Error - Member already voted");
-					return t.error(ERROR_CODE_MEMBER_ALREADY_VOTED, ERROR_DESCRIPTION_MEMBER_ALREADY_VOTED)
-				}
-			}
+			} // end voting not closed
 
-			// Add new member
-			newMember := Member{}
-			newMember.Id = args[3]
-			newMember.Name = args[4]
-			newMember.Category = args[5]
-			newMember.Office = args[6]
-			newMember.Channel = args[7]
-			allvotings.Votings[i].Voters = append(allvotings.Votings[i].Voters, newMember)
+		} // end voting found
 
-			// Find option by ID
-			for k := range allvotings.Votings[i].Options{
-				if allvotings.Votings[i].Options[k].Id == optionId1{
-					fmt.Println("Option found!");
-
-					newVote := Vote{}
-					newVote.Voter = newMember
-					newVote.Justification = args[2]
-
-					allvotings.Votings[i].Options[k].Votes = append(allvotings.Votings[i].Options[k].Votes, newVote)
-					allvotings.Votings[i].Options[k].NumberOfVotes += 1
-
-				}
-			}
-
-			jsonAsBytes, _ := json.Marshal(allvotings)
-			err = stub.PutState(votingIndexStr, jsonAsBytes)
-			if err != nil {
-				return nil, err
-			}
-			fmt.Println("- end vote")
-      return nil, nil
-		}
-		return nil, errors.New("Voting not found")
-	}
+	} // end iterate all votings
 	return nil, errors.New("Voting not found")
 
 }
