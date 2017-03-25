@@ -275,6 +275,9 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	var allvotings AllVotings
   json.Unmarshal(votingsAsBytes, &allvotings)
 
+	// Get current timestamp
+	currentTime = makeTimestamp()
+	
 	// Find voting by ID
 	for i := range allvotings.Votings{
 		if allvotings.Votings[i].Id == strconv.Itoa(votingId1){
