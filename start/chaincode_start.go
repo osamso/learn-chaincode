@@ -303,6 +303,11 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 				if currentTime > expirationTime {
 					fmt.Printf("Voting identified by Id = '%s' is closed!!\n", allvotings.Votings[i].Id)
 					allvotings.Votings[i].Status = false
+					jsonAsBytes, _ := json.Marshal(allvotings)
+					err = stub.PutState(votingIndexStr, jsonAsBytes)
+					if err != nil {
+						return nil, err
+					}
 					return t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
 				}
 			}
