@@ -112,9 +112,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
-
 	return nil, nil
-
 }
 
 // Invoke is our entry point to invoke a chaincode function
@@ -125,20 +123,23 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
+
 	} else if function == "add_voting" {
 		res, err := t.add_voting(stub, args)
 		return res, err
+
 	} else if function == "vote" {
   	res, err := t.vote(stub, args)
     return res, err
-	} else if function == "update" {
-	  	res, err := t.update(stub, args)
-	    return res, err
+
+	} else if function == "update_votings_status" {
+	  res, err := t.update_votings_status(stub, args)
+		return res, err
 	}
+
 	fmt.Println("invoke did not find func: " + function)
 	// Error
 	return nil, errors.New("Received unknown function invocation")
-
 }
 
 func (t *SimpleChaincode) add_voting(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -239,6 +240,8 @@ func makeTimestamp() int64 {
 
 
 func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var currentTime, expirationTime int64
+	var votingDeadlineInMilliseconds int
 
 	// votingId, optionId, justification, id, name, category, office, channel
 	//     0        1      	     2         3    4      5	    6	     7
@@ -281,6 +284,24 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 			if allvotings.Votings[i].Status == false {
 				fmt.Println("Error - Voting is closed");
 				return t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
+
+			} else {
+
+				votingDeadlineInMilliseconds = allvotings.Votings[i].VotingDeadlineInMinutes * 60 * 1000
+				expirationTime = allvotings.Votings[i].StartVotingTimestamp + int64(votingDeadlineInMilliseconds)
+
+				fmt.Printf("Checking voting expiration...\n")
+				fmt.Printf("votingDeadlineInMinutes: %s\n", strconv.Itoa(allvotings.Votings[i].VotingDeadlineInMinutes))
+				fmt.Printf("votingDeadlineInMilliseconds: %s\n", strconv.Itoa(votingDeadlineInMilliseconds))
+				fmt.Printf("expirationTime: %s\n", strconv.FormatInt(expirationTime, 10))
+				fmt.Printf("currentTime: %s\n", strconv.FormatInt(currentTime, 10))
+
+				// Checking if voting has expired and closes it
+				if expirationTime > currentTime {
+					fmt.Printf("Voting identified by Id = '%s' is closed!!\n", allvotings.Votings[i].Id)
+					allvotings.Votings[i].Status = false
+					return t.error(ERROR_CODE_VOTING_CLOSED, ERROR_DESCRIPTION_VOTING_CLOSED)
+				}
 			}
 
 			// Check if member already voted
@@ -321,7 +342,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 				return nil, err
 			}
 			fmt.Println("- end vote")
-        		return nil, nil
+      return nil, nil
 		}
 		return nil, errors.New("Voting not found")
 	}
@@ -335,14 +356,14 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 	// Handle different functions
 	if function == "read" {
-		return t.read(stub, args)
+		return t.get_votings(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)						//error
 	return nil, errors.New("Received unknown function query")
 
 }
 
-func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) get_votings(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var name, jsonResp string
 	var err error
 
@@ -360,34 +381,23 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	return valAsbytes, nil
 }
 
-
-func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var name, jsonResp string
-	var err error
-
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting name of the var to query")
-	}
-
-	name = args[0]
-	//get the var from chaincode state
-	valAsbytes, err := stub.GetState(name)
-	if err != nil {
-		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
-		return nil, errors.New(jsonResp)
-	} else {
-			// Close votings that have expired before returing response
-			return t.update_votings_status(stub, valAsbytes);
-	}
-	return valAsbytes, nil
-}
-
-
-
-func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface, allVotingsAsBytes []byte) ([]byte, error) {
 	var currentTime int64
 	var votingDeadlineInMilliseconds int
 	var err error
+
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting name of the var to query")
+	}
+
+	name = args[0]
+	//get the var from chaincode state
+	allVotingsAsBytes, err := stub.GetState(name)
+	if err != nil {
+		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
+		return nil, errors.New(jsonResp)
+	}
 
 	var allvotings AllVotings
   json.Unmarshal(allVotingsAsBytes, &allvotings)
@@ -419,19 +429,18 @@ func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface
 		fmt.Printf("Votings status updated")
 		jsonAsBytes, _ := json.Marshal(allvotings)
 		err = stub.PutState(votingIndexStr, jsonAsBytes)
-		if err != nil {
-			return nil, err
-		}
-		return jsonAsBytes, nil
+	} else {
+			fmt.Printf("Votings status not updated")
 	}
-	fmt.Printf("Votings status not updated")
-	fmt.Println("- end update_votings_status")
-	return allVotingsAsBytes, nil
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("- end update_votings")
+	return nil, nil
 }
+
 
 func (t *SimpleChaincode) error(code, description string) ([]byte, error) {
 	jsonResp := "{\"error\": {\"code\":" + code + "\", \"description\":" + description + "\"}}"
-	errorAsBytes, _ := json.Marshal(jsonResp)
-	// return errorAsBytes, errors.New(jsonResp)
-	return errorAsBytes, nil
+	return nil, errors.New(jsonResp)
 }
