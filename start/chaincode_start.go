@@ -132,6 +132,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
   	res, err := t.vote(stub, args)
     return res, err
 
+	} else if function == "update_voting_status" {
+		res, err := t.update_voting_status(stub, args)
+		return res, err
+
 	} else if function == "update_votings_status" {
 	  res, err := t.update_votings_status(stub, args)
 		return res, err
@@ -418,6 +422,42 @@ func (t *SimpleChaincode) get_voting(stub shim.ChaincodeStubInterface, args []st
 		}
 	}
 	fmt.Println("Voting '" + args[0] + "' not found!");
+	return nil, errors.New("Voting not found")
+}
+
+func (t *SimpleChaincode) update_voting_status(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	// 1st argument - votingId
+	votingId1, err := strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("1st argument must be a numeric string")
+	}
+
+	// Get all votings
+	votingsAsBytes, err := stub.GetState(votingIndexStr)
+	if err != nil {
+		return nil, errors.New("Failed to get votings")
+	}
+	var allvotings AllVotings
+  json.Unmarshal(votingsAsBytes, &allvotings)
+
+	// Iterate all votings
+	for i := range allvotings.Votings{
+
+		// Find by voting ID
+		if allvotings.Votings[i].Id == strconv.Itoa(votingId1){
+			fmt.Println("Voting '" + args[0] + "' found!");
+			allvotings.Votings[i].Status = false
+
+			jsonAsBytes, _ := json.Marshal(allvotings)
+			err = stub.PutState(votingIndexStr, jsonAsBytes)
+			if err != nil {
+				return nil, err
+			}
+			fmt.Printf("Voting ''" + args[0] + "'' status updated to false ")
+			return nil, nil
+		}
+	}
 	return nil, errors.New("Voting not found")
 }
 
