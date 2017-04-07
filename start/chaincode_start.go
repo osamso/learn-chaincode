@@ -238,7 +238,6 @@ func makeTimestamp() int64 {
     return time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
 }
 
-
 func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var currentTime, expirationTime int64
 	var votingDeadlineInMilliseconds int
@@ -363,8 +362,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	fmt.Println("query is running " + function)
 
 	// Handle different functions
-	if function == "read" {
+	if function == "get_votings" {
 		return t.get_votings(stub, args)
+	} else if function == "get_voting"{
+		return t.get_voting(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)						//error
 	return nil, errors.New("Received unknown function query")
@@ -387,6 +388,37 @@ func (t *SimpleChaincode) get_votings(stub shim.ChaincodeStubInterface, args []s
 		return nil, errors.New(jsonResp)
 	}
 	return valAsbytes, nil
+}
+
+func (t *SimpleChaincode) get_voting(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	// 1st argument - votingId
+	votingId1, err := strconv.Atoi(args[0])
+	if err != nil {
+		return nil, errors.New("1st argument must be a numeric string")
+	}
+
+	// Get all votings
+	votingsAsBytes, err := stub.GetState(votingIndexStr)
+	if err != nil {
+		return nil, errors.New("Failed to get votings")
+	}
+	var allvotings AllVotings
+  json.Unmarshal(votingsAsBytes, &allvotings)
+
+	// Iterate all votings
+	for i := range allvotings.Votings{
+
+		// Checking by voting ID
+		if allvotings.Votings[i].Id == strconv.Itoa(votingId1){
+			fmt.Println("Voting '" + args[0] + "' found!");
+			voting := allvotings.Votings[i]
+			jsonAsBytes, _ := json.Marshal(voting)
+			return jsonAsBytes, nil
+		}
+	}
+	fmt.Println("Voting '" + args[0] + "' not found!");
+	return nil, errors.New("Voting not found")
 }
 
 func (t *SimpleChaincode) update_votings_status(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
