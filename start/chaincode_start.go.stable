@@ -41,11 +41,11 @@ const ERROR_DESCRIPTION_MEMBER_ALREADY_VOTED string = "Member already voted"
 
 
 type Member struct{
-	SenderId string `json:"senderid"`
+	Id string `json:"id"`
 	Name string `json:"name"`
 	Channel string `json:"channel"`
-	BoteId string `json:"boteid"`
-	ConversationId string `json:"conversationid"`
+	Category string `json:"category"`
+	Office string `json:"office"`
 }
 
 type Vote struct{
@@ -246,11 +246,10 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	var currentTime, expirationTime int64
 	var votingDeadlineInMilliseconds int
 
-	// votingId, optionId, justification, senderid, name, channel, boteid, conversationid
-	//     0        1      	     2         3    			4      5	    6	     			7
-  // ["1", "2", "Justification", "1", "Peter", "Web", "bote10", "conv10"]
-
-	if len(args) < 8 {
+	// votingId, optionId, justification, id, name, category, office, channel
+	//     0        1      	     2         3    4      5	    6	     7
+  // ["1", "2", "Justification", "1", "Peter", "SKL", "Barcelona", "Twitter"]
+  if len(args) < 8 {
   	return nil, errors.New("Incorrect number of arguments. Expecting like 8?")
   }
 
@@ -266,14 +265,9 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
     return nil, errors.New("2nd argument must be a numeric string")
   }
 
-	// 4th argument - senderId
+	// 4th argument - memberId
 	if len(args[3]) <= 0 {
 		return nil, errors.New("4th argument must be a non-empty string")
-	}
-
-	// 6th argument - channel
-	if len(args[5]) <= 0 {
-		return nil, errors.New("6th argument must be a non-empty string")
 	}
 
 	// Get all votings
@@ -319,7 +313,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 					// Check if member already voted
 					for j := range allvotings.Votings[i].Voters{
-						if allvotings.Votings[i].Voters[j].SenderId == args[3]{
+						if allvotings.Votings[i].Voters[j].Id == args[3]{
 							fmt.Println("Error - Member already voted");
 							return t.error(ERROR_CODE_MEMBER_ALREADY_VOTED, ERROR_DESCRIPTION_MEMBER_ALREADY_VOTED)
 						}
@@ -327,11 +321,11 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 					// Add new member
 					newMember := Member{}
-					newMember.SenderId = args[3]
+					newMember.Id = args[3]
 					newMember.Name = args[4]
-					newMember.Channel = args[5]
-					newMember.BoteId = args[6]
-					newMember.ConversationId = args[7]
+					newMember.Category = args[5]
+					newMember.Office = args[6]
+					newMember.Channel = args[7]
 					allvotings.Votings[i].Voters = append(allvotings.Votings[i].Voters, newMember)
 
 					// Find option by ID
